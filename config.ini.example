@@ -1,0 +1,7 @@
+[BANK_INFO]
+LOGIN_URL = https://e.khanbank.com/pageLoginMiniModal
+TRANSACTION_DOWNLOAD_URL = https://e.khanbank.com/pageMain?content=ucAcnt_Statement3&bd={begin_date}&ed={end_date}&an={account_number}&at=XLS1
+
+[CLIENT_INFO]
+USERNAME = username
+PASSWORD = password
