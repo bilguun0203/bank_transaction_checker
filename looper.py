@@ -21,12 +21,10 @@ def log(bank):
         save_path = None
     result = bank.get_transactions(account_number, currency, begin_date=begin_date, end_date=end_date, save_path=save_path)
     if result is not False:
-        try:
-            df = pd.read_excel(result, header=1, skipfooter=1)
+        df = bank.to_dataframe()
+        if df is not None:
             for index, row in df.iterrows():
                 print(row['Гүйлгээний огноо'], row['Эхний үлдэгдэл'], row['Дебит гүйлгээ'], row['Кредит гүйлгээ'], row['Гүйлгээний утга'])
-        except Exception as e:
-            print(e)
     else:
         print('Not logged in!')
 

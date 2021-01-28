@@ -3,6 +3,7 @@ import configparser
 import argparse
 from html.parser import HTMLParser
 from datetime import date
+import pandas as pd
 
 
 class BankHTMLParser(HTMLParser):
@@ -25,15 +26,20 @@ class BankSession:
         self.login_url = login_url
         self.download_url = download_url
         self.session = requests.session()
+        self.content = None
 
     def login(self, username, password):
-        r = self.session.get(self.login_url)
-        parser = BankHTMLParser()
-        parser.feed(r.text)
-        payload = parser.extracted_data
-        payload['txtCustNo'] = username
-        payload['txtPassword'] = password
-        r = self.session.post(self.login_url, data=payload)
+        try:
+            r = self.session.get(self.login_url, verify=False)
+            parser = BankHTMLParser()
+            parser.feed(r.text)
+            payload = parser.extracted_data
+            payload['txtCustNo'] = username
+            payload['txtPassword'] = password
+            r = self.session.post(self.login_url, data=payload)
+        except Exception as e:
+            print('Can\'t login')
+            print(e)
 
     def isloggedin(self):
         return '.ASPXAUTH' in self.session.cookies.keys() and '.ASPXFORMSAUTH' in self.session.cookies.keys()
@@ -49,10 +55,18 @@ class BankSession:
             begin_date = end_date
         r = self.session.get(self.download_url.format(
             begin_date=begin_date, end_date=end_date, account_number=currency + 'D0000000' + account_number))
+        self.content = r.content
         if save_path is not None:
             with open(save_path, 'wb') as ofile:
                 ofile.write(r.content)
-        return r.content
+        return self
+
+    def to_dataframe(self):
+        try:
+            return pd.read_excel(self.content, header=1, skipfooter=1)
+        except Exception as e:
+            print(e)
+            return None
 
 
 if __name__ == '__main__':
@@ -76,3 +90,5 @@ if __name__ == '__main__':
     bank.login(client_info['USERNAME'], client_info['PASSWORD'])
     bank.get_transactions(args.account_number, args.currency, begin_date=args.begin_date,
                           end_date=args.end_date, save_path=args.save_path)
+    
+    bank.to_dataframe()
